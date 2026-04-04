@@ -1,0 +1,8 @@
+{
+  "name": "sthan-cli",
+  "private": true,
+  "workspaces": [
+    "packages/core",
+    "packages/mcp-server"
+  ]
+}
