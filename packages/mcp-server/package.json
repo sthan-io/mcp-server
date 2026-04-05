@@ -1,6 +1,7 @@
 {
   "name": "@sthan/mcp-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "mcpName": "io.github.sthan-io/mcp-server",
   "description": "MCP server for sthan.io — US address verification, parsing, autocomplete, geocoding, and IP geolocation",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -45,7 +46,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
-    "@sthan/core": "0.1.0"
+    "@sthan/core": "0.1.1"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
