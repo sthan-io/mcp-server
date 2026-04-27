@@ -5,24 +5,24 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { SthanClient, SthanApiError } from "@sthan/core";
 import { z } from "zod";
 
-const apiKey = process.env.STHAN_API_KEY;
-if (!apiKey) {
-  console.error(
-    "Error: STHAN_API_KEY environment variable is required.\n" +
-      "Get your API key at https://sthan.io/dashboard\n" +
-      "Set it: export STHAN_API_KEY=sthan_test_your_key_here"
-  );
-  process.exit(1);
-}
+const MISSING_KEY_MESSAGE =
+  "STHAN_API_KEY environment variable is not set. " +
+  "Get a free key at https://sthan.io/dashboard, then set STHAN_API_KEY in your MCP client config.";
 
-const client = new SthanClient({
-  apiKey,
-  baseUrl: process.env.STHAN_API_URL,
-});
+function getClient(): SthanClient {
+  const apiKey = process.env.STHAN_API_KEY;
+  if (!apiKey) {
+    throw new Error(MISSING_KEY_MESSAGE);
+  }
+  return new SthanClient({
+    apiKey,
+    baseUrl: process.env.STHAN_API_URL,
+  });
+}
 
 const server = new McpServer({
   name: "sthan",
-  version: "0.1.0",
+  version: "0.1.2",
 });
 
 // --- Tool 1: Verify US Address ---
@@ -39,7 +39,7 @@ server.tool(
   },
   async ({ address }) => {
     try {
-      const response = await client.verifyAddress(address);
+      const response = await getClient().verifyAddress(address);
       return {
         content: [{ type: "text", text: JSON.stringify(response.Result, null, 2) }],
       };
@@ -63,7 +63,7 @@ server.tool(
   },
   async ({ address }) => {
     try {
-      const response = await client.parseAddress(address);
+      const response = await getClient().parseAddress(address);
       return {
         content: [{ type: "text", text: JSON.stringify(response.Result, null, 2) }],
       };
@@ -85,7 +85,7 @@ server.tool(
   },
   async ({ text }) => {
     try {
-      const response = await client.autocompleteAddress(text);
+      const response = await getClient().autocompleteAddress(text);
       return {
         content: [{ type: "text", text: JSON.stringify(response.Result, null, 2) }],
       };
@@ -112,7 +112,7 @@ server.tool(
   },
   async ({ text, display_type }) => {
     try {
-      const response = await client.autocompleteCity(text, display_type);
+      const response = await getClient().autocompleteCity(text, display_type);
       return {
         content: [{ type: "text", text: JSON.stringify(response.Result, null, 2) }],
       };
@@ -141,7 +141,7 @@ server.tool(
   },
   async ({ text, display_type }) => {
     try {
-      const response = await client.autocompleteZipCode(text, display_type);
+      const response = await getClient().autocompleteZipCode(text, display_type);
       return {
         content: [{ type: "text", text: JSON.stringify(response.Result, null, 2) }],
       };
@@ -165,7 +165,7 @@ server.tool(
   },
   async ({ address }) => {
     try {
-      const response = await client.geocodeAddress(address);
+      const response = await getClient().geocodeAddress(address);
       return {
         content: [{ type: "text", text: JSON.stringify(response.Result, null, 2) }],
       };
@@ -186,7 +186,7 @@ server.tool(
   },
   async ({ latitude, longitude }) => {
     try {
-      const response = await client.reverseGeocode(latitude, longitude);
+      const response = await getClient().reverseGeocode(latitude, longitude);
       return {
         content: [{ type: "text", text: JSON.stringify(response.Result, null, 2) }],
       };
@@ -208,7 +208,7 @@ server.tool(
   },
   async ({ ip }) => {
     try {
-      const response = await client.ipGeolocation(ip);
+      const response = await getClient().ipGeolocation(ip);
       return {
         content: [{ type: "text", text: JSON.stringify(response.Result, null, 2) }],
       };
