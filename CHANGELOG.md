@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-06-27
+
+### Added
+- `@sthan/cli` package: a command-line tool with `login`, `whoami`, `verify`,
+  `parse`, `geocode` (and reverse), and `ip`. Single lookups print a summary or
+  `--json`. `verify`, `parse`, and `geocode` support batch `--input`/`--output`
+  over CSV, TSV, XLSX, and TXT files, with bounded concurrency, automatic 429
+  backoff, and per-row error capture.
+- `mapWithConcurrency` in `@sthan/core`: a dependency-free concurrency runner
+  with per-item retry and exponential backoff.
+
+### Fixed
+- `@sthan/core` `request()` read the response body as JSON unconditionally,
+  which crashed on empty or non-JSON error responses (for example a 401 with no
+  body). It now reads the body as text first and surfaces the HTTP status as a
+  `SthanApiError`. This also fixes the auth-error message in `@sthan/mcp-server`.
+
+### Changed
+- `@sthan/core` and `@sthan/mcp-server` updated to 0.1.3.
+
 ## [0.1.2] - 2026-04-27
 
 ### Changed

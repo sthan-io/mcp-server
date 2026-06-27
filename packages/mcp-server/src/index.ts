@@ -22,7 +22,7 @@ function getClient(): SthanClient {
 
 const server = new McpServer({
   name: "sthan",
-  version: "0.1.2",
+  version: "0.1.3",
 });
 
 // --- Tool 1: Verify US Address ---

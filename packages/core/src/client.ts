@@ -29,28 +29,63 @@ export class SthanClient {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeout);
 
+    let response: Response;
     try {
-      const response = await fetch(url, {
+      response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
           Accept: "application/json",
         },
         signal: controller.signal,
       });
-
-      const body = await response.json() as SthanResponse<T>;
-
-      if (!response.ok || body.IsError) {
-        const errorMsg = body.Errors?.length
-          ? body.Errors.join("; ")
-          : `HTTP ${response.status}`;
-        throw new SthanApiError(errorMsg, body.StatusCode, body.Errors);
+    } catch (e) {
+      // Timeout (abort) and DNS/connection failures land here — not API errors.
+      if (e instanceof Error && e.name === "AbortError") {
+        throw new Error(`Request timed out after ${this.timeout}ms`);
       }
-
-      return body;
+      throw e;
     } finally {
       clearTimeout(timer);
     }
+
+    // Read the body once as text, then parse defensively: error responses
+    // (401, 429, 5xx) are often empty or non-JSON and must not crash parsing.
+    const text = await response.text();
+    let body: SthanResponse<T> | undefined;
+    if (text) {
+      try {
+        body = JSON.parse(text) as SthanResponse<T>;
+      } catch {
+        body = undefined;
+      }
+    }
+
+    if (!response.ok) {
+      const message = body?.Errors?.length
+        ? body.Errors.join("; ")
+        : httpErrorMessage(response.status);
+      throw new SthanApiError(
+        message,
+        body?.StatusCode ?? response.status,
+        body?.Errors ?? []
+      );
+    }
+
+    if (!body) {
+      throw new SthanApiError(
+        `Empty or invalid JSON response (HTTP ${response.status})`,
+        response.status
+      );
+    }
+
+    if (body.IsError) {
+      const message = body.Errors?.length
+        ? body.Errors.join("; ")
+        : `HTTP ${response.status}`;
+      throw new SthanApiError(message, body.StatusCode, body.Errors);
+    }
+
+    return body;
   }
 
   async verifyAddress(address: string) {
@@ -99,6 +134,27 @@ export class SthanClient {
     return this.request<Record<string, unknown>>(
       `/IpGeolocation/${encodeURIComponent(ip)}`
     );
+  }
+}
+
+/** Friendly message for an HTTP status when the response carries no error body. */
+function httpErrorMessage(status: number): string {
+  switch (status) {
+    case 401:
+      return "Authentication failed — check your API key (401)";
+    case 403:
+      return "Access forbidden — your plan may not allow this, or quota exceeded (403)";
+    case 404:
+      return "Not found (404)";
+    case 429:
+      return "Rate limited — too many requests (429)";
+    case 500:
+    case 502:
+    case 503:
+    case 504:
+      return `Server error (${status})`;
+    default:
+      return `HTTP ${status}`;
   }
 }
 

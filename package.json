@@ -3,6 +3,7 @@
   "private": true,
   "workspaces": [
     "packages/core",
-    "packages/mcp-server"
+    "packages/mcp-server",
+    "packages/cli"
   ]
 }
