@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-06-27
+
+### Changed
+- Rewrote all 8 MCP tool descriptions for clarity and tool-definition quality:
+  each now states its purpose, when to use it and when not (pointing to the
+  right sibling tool), the response fields it returns, and behavioral notes
+  (read-only, requires `STHAN_API_KEY`, counts toward the plan rate limit, and
+  how errors are surfaced).
+- Migrated MCP tool registration to `registerTool` and added read-only tool
+  annotations (`readOnlyHint`, `idempotentHint`, `openWorldHint`,
+  non-destructive) plus a human-readable `title` per tool.
+- `@sthan/core` and `@sthan/cli` republished at 0.1.4 to keep the monorepo in
+  lockstep (no functional changes in those two packages).
+
 ## [0.1.3] - 2026-06-27
 
 ### Added

@@ -20,22 +20,40 @@ function getClient(): SthanClient {
   });
 }
 
+// Every tool is a read-only lookup against the sthan.io API: no state is
+// changed, repeating a call with the same input returns the same result, and
+// it reaches an external service (the open world of US addresses).
+const READ_ONLY_HINTS = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: true,
+} as const;
+
 const server = new McpServer({
   name: "sthan",
-  version: "0.1.3",
+  version: "0.1.4",
 });
 
 // --- Tool 1: Verify US Address ---
 
-server.tool(
+server.registerTool(
   "sthan_verify_address",
-  "Verify if a US address is real and deliverable. Returns standardized format, ZIP+4, delivery point validation (DPV), and whether it's residential or commercial. Use when someone asks 'is this address real?', 'can mail be delivered here?', or 'verify this address'.",
   {
-    address: z
-      .string()
-      .describe(
-        "Full or partial US address in any format. Examples: '123 Main St, New York, NY 10001', '123 main st nyc', '1600 Pennsylvania Ave Washington DC'"
-      ),
+    title: "Verify US Address",
+    description:
+      "Verify whether a US street address is real and deliverable. Returns the standardized address, ZIP+4, county, a deliverability status, and the dpvConfirmation code (Y = deliverable; N = not found or undeliverable; S = address found but the apartment/unit is missing or unconfirmed; blank = unknown). " +
+      "Use to confirm a US mailing address, clean address data, or check an address before shipping. " +
+      "Do not use for non-US addresses, to get map coordinates (use sthan_geocode), or to only split an address into fields without checking it (use sthan_parse_address). " +
+      "Read-only with no side effects. Requires a sthan.io API key in STHAN_API_KEY; each call counts toward your plan's rate limit (a free tier is available). On failure it returns an error message, for example an invalid API key, an exceeded rate limit, or an address that could not be found.",
+    inputSchema: {
+      address: z
+        .string()
+        .describe(
+          "Full or partial US address in any format. Examples: '123 Main St, New York, NY 10001', '123 main st nyc', '1600 Pennsylvania Ave Washington DC'"
+        ),
+    },
+    annotations: READ_ONLY_HINTS,
   },
   async ({ address }) => {
     try {
@@ -51,15 +69,23 @@ server.tool(
 
 // --- Tool 2: Parse US Address ---
 
-server.tool(
+server.registerTool(
   "sthan_parse_address",
-  "Parse a freeform US address string into structured components (street number, name, type, direction, unit, city, state, zip). Use when someone has messy or unstructured address text and needs it broken into parts.",
   {
-    address: z
-      .string()
-      .describe(
-        "Raw address text to parse. Freeform input, abbreviations OK. Example: 'apt 2b 500 broadway new york ny'"
-      ),
+    title: "Parse US Address",
+    description:
+      "Break a freeform US address string into structured components: address number, street name, pre/post directionals, street type, unit type and number, city, state, ZIP, and ZIP+4. " +
+      "Use when you have messy or unstructured US address text and need the individual fields. " +
+      "This parses and standardizes only; it does not confirm the address is deliverable (use sthan_verify_address) and does not return coordinates (use sthan_geocode). " +
+      "Read-only with no side effects. Requires a sthan.io API key in STHAN_API_KEY; each call counts toward your plan's rate limit (a free tier is available). On failure it returns an error message, for example an invalid API key or an exceeded rate limit.",
+    inputSchema: {
+      address: z
+        .string()
+        .describe(
+          "Raw address text to parse. Freeform input, abbreviations OK. Example: 'apt 2b 500 broadway new york ny'"
+        ),
+    },
+    annotations: READ_ONLY_HINTS,
   },
   async ({ address }) => {
     try {
@@ -75,13 +101,21 @@ server.tool(
 
 // --- Tool 3: Autocomplete US Address ---
 
-server.tool(
+server.registerTool(
   "sthan_autocomplete_address",
-  "Get address suggestions from partial input. Sub-100ms response time. Returns array of complete US address strings. Use for type-ahead address completion.",
   {
-    text: z
-      .string()
-      .describe("Partial address text (3+ characters recommended). Example: '123 Main'"),
+    title: "Autocomplete US Address",
+    description:
+      "Return a list of complete US street-address suggestions for partial input, intended for type-ahead / autocomplete fields. " +
+      "Use while a user is typing an address and you want to offer full matches. " +
+      "For city-only suggestions use sthan_autocomplete_city; for ZIP-only suggestions use sthan_autocomplete_zipcode; to validate a finished address use sthan_verify_address. " +
+      "Read-only with no side effects. Requires a sthan.io API key in STHAN_API_KEY; each call counts toward your plan's rate limit (a free tier is available). On failure it returns an error message.",
+    inputSchema: {
+      text: z
+        .string()
+        .describe("Partial address text (3+ characters recommended). Example: '123 Main'"),
+    },
+    annotations: READ_ONLY_HINTS,
   },
   async ({ text }) => {
     try {
@@ -97,18 +131,28 @@ server.tool(
 
 // --- Tool 4: Autocomplete US City ---
 
-server.tool(
+server.registerTool(
   "sthan_autocomplete_city",
-  "Get US city name suggestions from partial input. Returns matching cities with state.",
   {
-    text: z.string().describe("Partial city name. Example: 'San Fr'"),
-    display_type: z
-      .number()
-      .int()
-      .min(0)
-      .max(1)
-      .default(0)
-      .describe("0 = City, StateCode (e.g. 'San Francisco, CA'). 1 = City, State (e.g. 'San Francisco, California')"),
+    title: "Autocomplete US City",
+    description:
+      "Return a list of US city suggestions (with state) for partial input. " +
+      "Use for city-field type-ahead, or to resolve a partial city name to its full name and state. " +
+      "For full street-address suggestions use sthan_autocomplete_address; for ZIP codes use sthan_autocomplete_zipcode. " +
+      "Read-only with no side effects. Requires a sthan.io API key in STHAN_API_KEY; each call counts toward your plan's rate limit (a free tier is available). On failure it returns an error message.",
+    inputSchema: {
+      text: z.string().describe("Partial city name. Example: 'San Fr'"),
+      display_type: z
+        .number()
+        .int()
+        .min(0)
+        .max(1)
+        .default(0)
+        .describe(
+          "0 = City, StateCode (e.g. 'San Francisco, CA'). 1 = City, State (e.g. 'San Francisco, California')"
+        ),
+    },
+    annotations: READ_ONLY_HINTS,
   },
   async ({ text, display_type }) => {
     try {
@@ -124,20 +168,28 @@ server.tool(
 
 // --- Tool 5: Autocomplete US ZIP Code ---
 
-server.tool(
+server.registerTool(
   "sthan_autocomplete_zipcode",
-  "Get US ZIP code suggestions from partial input.",
   {
-    text: z.string().describe("Partial ZIP code. Example: '9021'"),
-    display_type: z
-      .number()
-      .int()
-      .min(0)
-      .max(3)
-      .default(0)
-      .describe(
-        "0 = Zip,StateCode. 1 = Zip,State. 2 = Zip-Zip4,StateCode. 3 = Zip-Zip4,State"
-      ),
+    title: "Autocomplete US ZIP Code",
+    description:
+      "Return a list of US ZIP code suggestions for partial input, each with state (and optionally ZIP+4). " +
+      "Use for ZIP-field type-ahead or to expand a partial ZIP. " +
+      "For city suggestions use sthan_autocomplete_city; for full addresses use sthan_autocomplete_address. " +
+      "Read-only with no side effects. Requires a sthan.io API key in STHAN_API_KEY; each call counts toward your plan's rate limit (a free tier is available). On failure it returns an error message.",
+    inputSchema: {
+      text: z.string().describe("Partial ZIP code. Example: '9021'"),
+      display_type: z
+        .number()
+        .int()
+        .min(0)
+        .max(3)
+        .default(0)
+        .describe(
+          "0 = Zip,StateCode. 1 = Zip,State. 2 = Zip-Zip4,StateCode. 3 = Zip-Zip4,State"
+        ),
+    },
+    annotations: READ_ONLY_HINTS,
   },
   async ({ text, display_type }) => {
     try {
@@ -153,15 +205,23 @@ server.tool(
 
 // --- Tool 6: Forward Geocode US Address ---
 
-server.tool(
+server.registerTool(
   "sthan_geocode",
-  "Convert a US address to latitude/longitude coordinates. Returns accuracy type (rooftop, interpolated, centroid, approximate) and confidence score. Use when someone needs coordinates for an address.",
   {
-    address: z
-      .string()
-      .describe(
-        "US address to geocode (freeform text). Example: '1600 Pennsylvania Ave, Washington DC'"
-      ),
+    title: "Geocode US Address",
+    description:
+      "Convert a US address to latitude/longitude coordinates. Returns the coordinates, a formatted address, an accuracy type (rooftop, interpolated, centroid, or approximate), and a confidence score. " +
+      "Use when you need map coordinates for an address. " +
+      "To go the other way (coordinates to address) use sthan_reverse_geocode; to check deliverability rather than location use sthan_verify_address. " +
+      "Read-only with no side effects. Requires a sthan.io API key in STHAN_API_KEY; each call counts toward your plan's rate limit (a free tier is available). On failure it returns an error message, for example an address that could not be located.",
+    inputSchema: {
+      address: z
+        .string()
+        .describe(
+          "US address to geocode (freeform text). Example: '1600 Pennsylvania Ave, Washington DC'"
+        ),
+    },
+    annotations: READ_ONLY_HINTS,
   },
   async ({ address }) => {
     try {
@@ -177,12 +237,20 @@ server.tool(
 
 // --- Tool 7: Reverse Geocode ---
 
-server.tool(
+server.registerTool(
   "sthan_reverse_geocode",
-  "Convert latitude/longitude coordinates to the nearest US street address. Returns the address with distance in meters from input coordinates. Use when someone has coordinates and wants the address.",
   {
-    latitude: z.number().min(-90).max(90).describe("Latitude coordinate"),
-    longitude: z.number().min(-180).max(180).describe("Longitude coordinate"),
+    title: "Reverse Geocode Coordinates",
+    description:
+      "Convert latitude/longitude coordinates to the nearest US street address. Returns the address, the distance in meters from the input point, an accuracy type, and a confidence score. " +
+      "Use when you have coordinates and need the closest address. US coverage only. " +
+      "To go the other way (address to coordinates) use sthan_geocode. " +
+      "Read-only with no side effects. Requires a sthan.io API key in STHAN_API_KEY; each call counts toward your plan's rate limit (a free tier is available). On failure it returns an error message.",
+    inputSchema: {
+      latitude: z.number().min(-90).max(90).describe("Latitude coordinate"),
+      longitude: z.number().min(-180).max(180).describe("Longitude coordinate"),
+    },
+    annotations: READ_ONLY_HINTS,
   },
   async ({ latitude, longitude }) => {
     try {
@@ -198,13 +266,21 @@ server.tool(
 
 // --- Tool 8: IP Geolocation ---
 
-server.tool(
+server.registerTool(
   "sthan_ip_geolocation",
-  "Look up the geographic location of an IPv4 or IPv6 address. Returns country, region, city, coordinates, timezone, and postal code. Use when someone wants to know where an IP address is located.",
   {
-    ip: z
-      .string()
-      .describe("IPv4 (e.g. '8.8.8.8') or IPv6 (e.g. '2001:4860:4860::8888') address"),
+    title: "IP Geolocation",
+    description:
+      "Look up the approximate geographic location of an IPv4 or IPv6 address. Returns country, region, city, coordinates, timezone, and postal code (some fields may be null when unknown). " +
+      "Use to estimate where an IP is located, for example for analytics or choosing a default region. " +
+      "This locates IP addresses, not postal addresses; to work with a street address use sthan_verify_address, sthan_parse_address, or sthan_geocode. " +
+      "Read-only with no side effects. Requires a sthan.io API key in STHAN_API_KEY; each call counts toward your plan's rate limit (a free tier is available). On failure it returns an error message.",
+    inputSchema: {
+      ip: z
+        .string()
+        .describe("IPv4 (e.g. '8.8.8.8') or IPv6 (e.g. '2001:4860:4860::8888') address"),
+    },
+    annotations: READ_ONLY_HINTS,
   },
   async ({ ip }) => {
     try {
