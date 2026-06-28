@@ -89,14 +89,18 @@ export class SthanClient {
   }
 
   async verifyAddress(address: string) {
+    // V2 endpoint: returns the full model (unitType/unitNumber, matchMode,
+    // matchTier, confidence, matchCode). V1 (/AddressVerification/Usa/Single)
+    // returns the older, leaner shape without those fields.
     return this.request<Record<string, unknown>>(
-      `/AddressVerification/Usa/Single/${encodeURIComponent(address)}`
+      `/v2/address-verification/usa/${encodeURIComponent(address)}`
     );
   }
 
   async parseAddress(address: string) {
+    // V2 endpoint: full mode-aware parse with confidence/matchTier.
     return this.request<Record<string, unknown>>(
-      `/AddressParser/USA/Single/${encodeURIComponent(address)}`
+      `/v2/address-parser/usa/${encodeURIComponent(address)}`
     );
   }
 
