@@ -2,6 +2,12 @@ export interface SthanClientOptions {
   apiKey: string;
   baseUrl?: string;
   timeout?: number;
+  /**
+   * Timeout for verify and parse, which can fall through to a live postal lookup
+   * that takes 70+ seconds for addresses it cannot match from its own data.
+   * Defaults to 150000 ms, the same limit sthan.io's own website uses.
+   */
+  postalLookupTimeout?: number;
 }
 
 export interface SthanResponse<T> {
@@ -17,17 +23,19 @@ export class SthanClient {
   private apiKey: string;
   private baseUrl: string;
   private timeout: number;
+  private postalLookupTimeout: number;
 
   constructor(options: SthanClientOptions) {
     this.apiKey = options.apiKey;
     this.baseUrl = (options.baseUrl || "https://api.sthan.io").replace(/\/$/, "");
     this.timeout = options.timeout || 30000;
+    this.postalLookupTimeout = options.postalLookupTimeout || 150000;
   }
 
-  async request<T>(path: string): Promise<SthanResponse<T>> {
+  async request<T>(path: string, timeoutMs: number = this.timeout): Promise<SthanResponse<T>> {
     const url = `${this.baseUrl}${path}`;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeout);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     let response: Response;
     try {
@@ -41,7 +49,7 @@ export class SthanClient {
     } catch (e) {
       // Timeout (abort) and DNS/connection failures land here — not API errors.
       if (e instanceof Error && e.name === "AbortError") {
-        throw new Error(`Request timed out after ${this.timeout}ms`);
+        throw new Error(`Request timed out after ${timeoutMs}ms`);
       }
       throw e;
     } finally {
@@ -93,14 +101,16 @@ export class SthanClient {
     // matchTier, confidence, matchCode). V1 (/AddressVerification/Usa/Single)
     // returns the older, leaner shape without those fields.
     return this.request<Record<string, unknown>>(
-      `/v2/address-verification/usa/${encodeURIComponent(address)}`
+      `/v2/address-verification/usa/${encodeURIComponent(address)}`,
+      this.postalLookupTimeout
     );
   }
 
   async parseAddress(address: string) {
     // V2 endpoint: full mode-aware parse with confidence/matchTier.
     return this.request<Record<string, unknown>>(
-      `/v2/address-parser/usa/${encodeURIComponent(address)}`
+      `/v2/address-parser/usa/${encodeURIComponent(address)}`,
+      this.postalLookupTimeout
     );
   }
 

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-09-26
+
+### Fixed
+- Address verification and parsing no longer time out at 30 seconds. When sthan.io
+  cannot match an address from its own data it falls through to a live postal
+  lookup, which can take 70+ seconds. `verifyAddress` and `parseAddress` now wait up
+  to 150 seconds (the same limit sthan.io's website uses); every other call keeps
+  the 30-second limit. Configurable via the new `postalLookupTimeout` client option.
+
 ## [0.1.5] - 2026-06-27
 
 ### Fixed

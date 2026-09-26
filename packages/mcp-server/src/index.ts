@@ -32,7 +32,7 @@ const READ_ONLY_HINTS = {
 
 const server = new McpServer({
   name: "sthan",
-  version: "0.1.5",
+  version: "0.1.6",
 });
 
 // --- Tool 1: Verify US Address ---

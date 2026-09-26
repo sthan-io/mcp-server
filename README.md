@@ -98,6 +98,10 @@ Once configured, just ask your AI assistant naturally:
 | `STHAN_API_KEY` | Yes | Your sthan.io API key (`sthan_test_*` for development, `sthan_live_*` for production) |
 | `STHAN_API_URL` | No | Override base URL (default: `https://api.sthan.io`) |
 
+## Response times
+
+Most calls return in 1 to 3 seconds. Address verification and parsing can take longer (up to about 2 minutes) when an address cannot be matched from sthan.io's own data and needs a live postal lookup, so the server waits up to 150 seconds for those two tools. If your MCP client stops waiting sooner, raise its tool timeout (for example, in Claude Code set `MCP_TOOL_TIMEOUT=150000`).
+
 ## Packages
 
 This monorepo publishes two packages:
