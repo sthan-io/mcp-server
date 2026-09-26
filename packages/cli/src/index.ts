@@ -12,7 +12,7 @@ import { str, pick, obj, die, printFields } from "./output.js";
 import { runBatch } from "./batch.js";
 import type { BatchOp, BatchOptions } from "./batch.js";
 
-const VERSION = "0.1.6";
+const VERSION = "0.1.7";
 
 const program = new Command();
 

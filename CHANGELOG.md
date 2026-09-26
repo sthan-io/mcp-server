@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7] - 2026-09-26
+
+### Added
+- One-click install: "Install in VS Code" (prompts for the API key and stores it
+  securely), "Install in VS Code Insiders", and "Add to Cursor" buttons.
+- Claude Desktop extension (`sthan.mcpb`, attached to each GitHub release): double-click
+  to install; Claude asks for the API key and keeps it in the system keychain. The server
+  is bundled into one file, so nothing else needs installing. Build with
+  `npm run build:mcpb`.
+
+### Fixed
+- Setup instructions: correct Claude Code command (`claude mcp add`, with `cmd /c` on
+  Windows), real Claude Desktop config paths, VS Code `.vscode/mcp.json`, Windsurf, and
+  `npx -y` everywhere (without `-y`, npx waits for an install prompt no AI client can
+  answer). Added an MCP Inspector test command and troubleshooting notes.
+
 ## [0.1.6] - 2026-09-26
 
 ### Fixed
