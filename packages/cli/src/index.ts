@@ -334,10 +334,18 @@ function printIpSummary(r: Record<string, unknown>): void {
     .filter(Boolean)
     .join(", ");
   if (place) console.log(`  ${place}`);
+  const tz = r["timezoneDetail"] as Record<string, unknown> | undefined;
+  const flags = [r["isMobile"] ? "mobile" : "", r["isProxy"] ? "proxy/VPN" : "", r["isHosting"] ? "hosting" : ""].filter(Boolean).join(", ");
+  const conf = r["confidence"];
   printFields([
     ["Coordinates", [str(r, "latitude"), str(r, "longitude")].filter(Boolean).join(", ")],
-    ["Timezone", str(r, "timezone")],
     ["Postal code", str(r, "postalCode")],
+    ["Timezone", str(r, "timezone") + (tz && tz["currentLocalTime"] ? ` (local time ${String(tz["currentLocalTime"])})` : "")],
+    ["Network", [str(r, "asn") ? `AS${str(r, "asn")}` : "", str(r, "asName"), str(r, "isp")].filter(Boolean).join(" ")],
+    ["Flags", flags],
+    ["Reverse DNS", str(r, "reverseDns")],
+    ["Confidence", typeof conf === "number" ? `${Math.round(conf * 100)}% agreement on the city` : ""],
+    ["Precision", str(r, "precision")],
   ]);
 }
 

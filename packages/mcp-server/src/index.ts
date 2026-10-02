@@ -271,7 +271,7 @@ server.registerTool(
   {
     title: "IP Geolocation",
     description:
-      "Look up the approximate geographic location of an IPv4 or IPv6 address. Returns country, region, city, coordinates, timezone, and postal code (some fields may be null when unknown). " +
+      "Look up the approximate geographic location of an IPv4 or IPv6 address and the network behind it. Returns country, region, city, coordinates, postal code, timezone with the current local time, flag, currency and calling code, the network (asn, asName, isp, organization), isMobile/isProxy/isHosting flags, reverseDns and a 0-1 confidence score. precision says whether the answer reaches a city, a region or only a country; confidence is absent when the address is new (ask again in a few seconds) or when sources disagreed; an isHosting or isProxy address does not locate a person. " +
       "Use to estimate where an IP is located, for example for analytics or choosing a default region. " +
       "This locates IP addresses, not postal addresses; to work with a street address use sthan_verify_address, sthan_parse_address, or sthan_geocode. " +
       "Read-only with no side effects. Requires a sthan.io API key in STHAN_API_KEY; each call counts toward your plan's rate limit (a free tier is available). On failure it returns an error message.",

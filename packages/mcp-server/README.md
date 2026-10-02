@@ -102,7 +102,7 @@ Click **Connect**, then **Tools** > **List Tools**, pick a tool, and run it.
 | `sthan_autocomplete_zipcode` | Get US ZIP code suggestions from partial input. |
 | `sthan_geocode` | Convert a US address to latitude/longitude coordinates. |
 | `sthan_reverse_geocode` | Convert coordinates to the nearest US street address. |
-| `sthan_ip_geolocation` | Look up geographic location of an IPv4 or IPv6 address. |
+| `sthan_ip_geolocation` | Locate an IPv4 or IPv6 address: country to postal code, local time, flag and currency, plus the network behind it (ASN, ISP, proxy/hosting flags) and a confidence score. |
 
 ## Environment variables
 

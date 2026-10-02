@@ -14,7 +14,7 @@
 - **Real US postal data** — addresses are verified against authoritative postal records, not heuristics. Returns delivery point validation (DPV), ZIP+4, residential/commercial flag.
 - **Sub-100ms autocomplete** — typeahead-grade response times for address, city, and ZIP suggestions.
 - **Strong geocoding** — forward geocoding returns accuracy classification (rooftop / interpolated / centroid / approximate) plus a confidence score, so your AI knows when to trust the result.
-- **IPv4 + IPv6 geolocation** — country, region, city, coordinates, timezone, postal code.
+- **IPv4 + IPv6 geolocation** — country, region, city, coordinates, postal code, timezone with current local time, flag, currency, calling code, network (ASN, ISP, organisation), mobile/proxy/hosting flags, reverse DNS and a confidence score.
 - **Free tier with no credit card** — get a key in under a minute at [sthan.io/dashboard](https://sthan.io/dashboard).
 
 ## Tools
@@ -28,7 +28,7 @@
 | `sthan_autocomplete_zipcode` | Suggest US ZIP codes from partial input. |
 | `sthan_geocode` | US address → latitude/longitude with accuracy + confidence. |
 | `sthan_reverse_geocode` | Latitude/longitude → nearest US street address with distance in meters. |
-| `sthan_ip_geolocation` | IPv4 or IPv6 → country, region, city, coordinates, timezone, postal code. |
+| `sthan_ip_geolocation` | IPv4 or IPv6 → location (country to postal code, local time, flag, currency), the network behind it (ASN, ISP, proxy/hosting flags) and a confidence score. |
 
 ## Quick start
 
