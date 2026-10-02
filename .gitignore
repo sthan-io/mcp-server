@@ -9,3 +9,6 @@ dist/
 mcpb/build/
 dist-mcpb/
 *.mcpb
+
+# local tokens, never committed
+secrets/

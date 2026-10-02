@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.8] - 2026-10-01
+## [0.1.9] - 2026-10-02
+
+(0.1.8 was staged on npm but never released; 0.1.9 is the same content.)
 
 - `sthan_ip_geolocation` / `sthan ip`: the API now also returns the network behind the address (`asn`, `asName`, `isp`, `organization`), `isMobile` / `isProxy` / `isHosting` flags, `reverseDns`, a 0-1 `confidence` score and country facts (flag, currency, calling code, local time). Tool description, README and the CLI summary show them. No breaking changes.
 
