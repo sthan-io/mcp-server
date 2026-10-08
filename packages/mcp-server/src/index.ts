@@ -4,6 +4,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { SthanClient, SthanApiError } from "@sthan/core";
 import { z } from "zod";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const MISSING_KEY_MESSAGE =
   "STHAN_API_KEY environment variable is not set. " +
@@ -32,7 +34,8 @@ const READ_ONLY_HINTS = {
 
 const server = new McpServer({
   name: "sthan",
-  version: "0.1.7",
+  // from package.json (dist/index.js -> ../package.json) so the reported version matches the release
+  version: JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8")).version as string,
 });
 
 // --- Tool 1: Verify US Address ---

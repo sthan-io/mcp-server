@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   resolveApiKey,
   saveApiKey,
@@ -12,7 +14,10 @@ import { str, pick, obj, die, printFields } from "./output.js";
 import { runBatch } from "./batch.js";
 import type { BatchOp, BatchOptions } from "./batch.js";
 
-const VERSION = "0.1.7";
+// Read the version from package.json (dist/index.js -> ../package.json) so it never drifts from the release
+const VERSION: string = JSON.parse(
+  readFileSync(join(__dirname, "..", "package.json"), "utf8")
+).version;
 
 const program = new Command();
 
@@ -29,15 +34,21 @@ program
 
 program
   .command("login")
-  .description("Save your sthan.io API key for future commands")
-  .requiredOption(
-    "--api-key <key>",
-    "Your API key (starts with sthan_). Create one at https://sthan.io/dashboard"
+  .description(
+    "Save your sthan.io API key for future commands: sthan login --api-key sthan_... (create one at https://sthan.io/dashboard)"
   )
-  .action((opts: { apiKey: string }) => {
-    const path = saveApiKey(opts.apiKey);
+  // --api-key is the program-level option; commander hands its value to the program, not to this
+  // command, so read it with optsWithGlobals (a second --api-key here always came back empty).
+  .action((_opts, cmd) => {
+    const { apiKey } = cmd.optsWithGlobals() as { apiKey?: string };
+    if (!apiKey) {
+      console.error("Missing API key. Run: sthan login --api-key sthan_...");
+      process.exitCode = 4;
+      return;
+    }
+    const path = saveApiKey(apiKey);
     console.log(`✓ API key saved to ${path}`);
-    console.log(`  ${maskApiKey(opts.apiKey)}`);
+    console.log(`  ${maskApiKey(apiKey)}`);
     console.log(`\nTry: sthan verify "123 Main St, New York, NY 10001"`);
   });
 
